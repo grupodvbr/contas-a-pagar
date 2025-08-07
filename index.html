@@ -27,8 +27,8 @@
     .pago { background: #c8f7c5; }
     .pendente { background: #f7c5c5; }
     .lancado { background: #fdf4c5; }
-    .filters, .urls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-    .filters > div, .urls > div { flex: 1 1 180px; }
+    .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .filters > div { flex: 1 1 180px; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; }
   </style>
 </head>
@@ -40,26 +40,18 @@
   </header>
 
   <div class="container">
-    <h3>URLs das Planilhas</h3>
-    <div class="urls">
-      <div><label>MERCATTO DELÍCIA:</label><input type="text" id="url1" placeholder="https://script.google.com/macros/s/AKfycbyF43AWfkx0KmtSyYvR6hSz9mqe5iSV0E2rQFpzjKBOvidHPKpMaJSlbtnlG9U9D_2Z/exec"></div>
-      <div><label>M.KIDS:</label><input type="text" id="url2" placeholder="URL da planilha"></div>
-      <div><label>VILLA GOURMET:</label><input type="text" id="url3" placeholder="URL da planilha"></div>
-      <div><label>PADARIA DELÍCIA:</label><input type="text" id="url4" placeholder="URL da planilha"></div>
-      <div><label>DELÍCIA GOURMET:</label><input type="text" id="url5" placeholder="https://script.google.com/macros/s/AKfycbzPSkWtXyxuCc_AFUGnKz_QiDdQlEN_zsUeQ74J90aRXcBbb7KBm7X1rsG1JmF1iZLN/exec"></div>
-      <div style="flex: 1 1 100%"><button onclick="salvarURLs()">Salvar URLs</button></div>
-    </div>
-      <div><label>Empresa 2:</label><input type="text" id="url2" placeholder="URL da planilha Google"></div>
-      <div><label>Empresa 3:</label><input type="text" id="url3" placeholder="URL da planilha Google"></div>
-      <div><label>Empresa 4:</label><input type="text" id="url4" placeholder="URL da planilha Google"></div>
-      <div style="flex: 1 1 100%"><button onclick="salvarURLs()">Salvar URLs</button></div>
-    </div>
-
     <h3>Filtros</h3>
     <div class="filters">
       <div>
         <label>Empresa:</label>
-        <select id="filtroEmpresa"><option value="TODAS">TODAS</option></select>
+        <select id="filtroEmpresa">
+          <option value="TODAS">TODAS</option>
+          <option value="MERCATTO DELÍCIA">MERCATTO DELÍCIA</option>
+          <option value="M.KIDS">M.KIDS</option>
+          <option value="VILLA GOURMET">VILLA GOURMET</option>
+          <option value="PADARIA DELÍCIA">PADARIA DELÍCIA</option>
+          <option value="DELÍCIA GOURMET">DELÍCIA GOURMET</option>
+        </select>
       </div>
       <div>
         <label>Status:</label>
@@ -113,44 +105,42 @@
     </table>
   </div>
 
-  <script>
-    // LocalStorage helpers
-    function salvarURLs() {
-      localStorage.setItem('url1', document.getElementById('url1').value);
-      localStorage.setItem('url2', document.getElementById('url2').value);
-      localStorage.setItem('url3', document.getElementById('url3').value);
-      localStorage.setItem('url4', document.getElementById('url4').value);
-      localStorage.setItem('url5', document.getElementById('url5').value);
-      alert("URLs salvas com sucesso! Recarregue a página ou aguarde leitura automática.");
-    }
+<script>
+const urls = [
+  { url: 'https://script.google.com/macros/s/AKfycbyF43AWfkx0KmtSyYvR6hSz9mqe5iSV0E2rQFpzjKBOvidHPKpMaJSlbtnlG9U9D_2Z/exec', empresa: 'MERCATTO DELÍCIA' },
+  { url: '', empresa: 'M.KIDS' },
+  { url: '', empresa: 'VILLA GOURMET' },
+  { url: '', empresa: 'PADARIA DELÍCIA' },
+  { url: 'https://script.google.com/macros/s/AKfycbzPSkWtXyxuCc_AFUGnKz_QiDdQlEN_zsUeQ74J90aRXcBbb7KBm7X1rsG1JmF1iZLN/exec', empresa: 'DELÍCIA GOURMET' }
+];
 
-    function carregarURLsSalvas() {
-      ['url1','url2','url3','url4','url5'].forEach(id => {
-        const el = document.getElementById(id);
-        if (localStorage.getItem(id)) el.value = localStorage.getItem(id);
-      });
-    }
+const urlMap = {
+  'MERCATTO DELÍCIA': '',
+  'M.KIDS': '',
+  'VILLA GOURMET': '',
+  'PADARIA DELÍCIA': '',
+  'DELÍCIA GOURMET': ''
+};
 
-    window.addEventListener('load', () => {
-      carregarURLsSalvas();
-      carregarTodosOsDados();
-    });
-  let todosDados = [];
+let todosDados = [];
 
 async function carregarTodosOsDados() {
   const tabela = document.querySelector('#tabela tbody');
   tabela.innerHTML = '';
   todosDados = [];
 
-  const urls = [
-    { url: localStorage.getItem('https://script.google.com/macros/s/AKfycbyF43AWfkx0KmtSyYvR6hSz9mqe5iSV0E2rQFpzjKBOvidHPKpMaJSlbtnlG9U9D_2Z/exec'), empresa: 'MERCATTO DELÍCIA' },
-    { url: localStorage.getItem('url2'), empresa: 'M.KIDS' },
-    { url: localStorage.getItem('url3'), empresa: 'VILLA GOURMET' },
-    { url: localStorage.getItem('url4'), empresa: 'PADARIA DELÍCIA' },
-    { url: localStorage.getItem('https://script.google.com/macros/s/AKfycbzPSkWtXyxuCc_AFUGnKz_QiDdQlEN_zsUeQ74J90aRXcBbb7KBm7X1rsG1JmF1iZLN/exec'), empresa: 'DELÍCIA GOURMET' },
-  ].filter(item => item.url);
-  const filtro = document.getElementById('filtroEmpresa');
-  filtro.innerHTML = '<option value="TODAS">TODAS</option>' + empresas.map(e => `<option value="${e}">${e}</option>`).join('');
+  for (const config of urls) {
+    if (!config.url) continue;
+    try {
+      const res = await fetch(`${config.url}?acao=ler`);
+      const dados = await res.json();
+      dados.forEach(item => item.empresa = config.empresa);
+      todosDados.push(...dados);
+    } catch (e) {
+      console.warn('Erro ao carregar dados de', config.empresa);
+    }
+  }
+  aplicarFiltros();
 }
 
 function aplicarFiltros() {
@@ -198,7 +188,11 @@ function aplicarFiltros() {
       <td>R$ ${(item.valorFinal || 0).toFixed(2)}</td>
       <td>${item.dataPagamento ? new Date(item.dataPagamento).toLocaleDateString('pt-BR') : ''}</td>
       <td>${item.cpf || ''}</td>
-      <td>${item.status}</td>
+      <td><select onchange="atualizarStatusIndividual(this, '${item.empresa}', ${item.index})">
+        <option value="PENDENTE" ${item.status === 'PENDENTE' ? 'selected' : ''}>PENDENTE</option>
+        <option value="LANÇADO" ${item.status === 'LANÇADO' ? 'selected' : ''}>LANÇADO</option>
+        <option value="PAGO" ${item.status === 'PAGO' ? 'selected' : ''}>PAGO</option>
+      </select></td>
       <td><div class="actions"><button onclick="alert('Função de edição/exclusão não implementada neste painel.')">Editar</button></div></td>
     `;
     tbody.appendChild(tr);
@@ -214,5 +208,27 @@ function liquidarEmMassa() {
   visiveis.forEach(tr => tr.classList.add('pago'));
   alert('Registros marcados como PAGO (apenas visualmente). Envie para API se desejar persistência.');
 }
+
+function atualizarStatusIndividual(select, empresa, index) {
+  const novoStatus = select.value;
+  const url = urlMap[empresa];
+  if (!url) return alert(`URL da empresa "${empresa}" não encontrada.`);
+
+  fetch(`${url}?acao=atualizarStatus`, {
+    method: 'POST',
+    body: JSON.stringify({ index, status: novoStatus })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error('Erro na requisição');
+    alert(`Status atualizado para ${novoStatus}`);
+  })
+  .catch(err => {
+    alert('Erro ao atualizar status');
+    console.error(err);
+  });
+}
+
+window.addEventListener('load', carregarTodosOsDados);
+</script>
 </body>
 </html>
