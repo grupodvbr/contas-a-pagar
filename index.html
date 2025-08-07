@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel de Couvert e Extras - Multiempresas</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; margin: 0; background: #f4f4f4; }
+    header {
+      background: white; padding: 10px 20px; display: flex; align-items: center; border-bottom: 1px solid #ccc;
+    }
+    header img { height: 50px; margin-right: 20px; }
+    header h1 { font-size: 1.5em; margin: 0; }
+    .container { padding: 20px; }
+    input, select, button {
+      padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px;
+    }
+    button { background: #2c3e50; color: white; cursor: pointer; }
+    button:hover { background: #34495e; }
+    table {
+      width: 100%; border-collapse: collapse; background: white; margin-top: 20px;
+    }
+    th, td {
+      padding: 8px; border: 1px solid #ddd; font-size: 13px; text-align: left;
+    }
+    .pago { background: #c8f7c5; }
+    .pendente { background: #f7c5c5; }
+    .lancado { background: #fdf4c5; }
+    .filters, .urls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .filters > div, .urls > div { flex: 1 1 180px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="https://static.wixstatic.com/media/d830b0_8cec50a98bbf4775814dbfa5386585e8~mv2.png" alt="Logo">
+    <h1>Painel de Couvert e Extras - Multiempresas</h1>
+  </header>
+
+  <div class="container">
+    <h3>URLs das Planilhas</h3>
+    <div class="urls">
+      <div><label>MERCATTO DELÍCIA:</label><input type="text" id="url1" placeholder="URL da planilha"></div>
+      <div><label>M.KIDS:</label><input type="text" id="url2" placeholder="URL da planilha"></div>
+      <div><label>VILLA GOURMET:</label><input type="text" id="url3" placeholder="URL da planilha"></div>
+      <div><label>PADARIA DELÍCIA:</label><input type="text" id="url4" placeholder="URL da planilha"></div>
+      <div><label>DELÍCIA GOURMET:</label><input type="text" id="url5" placeholder="URL da planilha"></div>
+      <div style="flex: 1 1 100%"><button onclick="salvarURLs()">Salvar URLs</button></div>
+    </div>
+      <div><label>Empresa 2:</label><input type="text" id="url2" placeholder="URL da planilha Google"></div>
+      <div><label>Empresa 3:</label><input type="text" id="url3" placeholder="URL da planilha Google"></div>
+      <div><label>Empresa 4:</label><input type="text" id="url4" placeholder="URL da planilha Google"></div>
+      <div style="flex: 1 1 100%"><button onclick="salvarURLs()">Salvar URLs</button></div>
+    </div>
+
+    <h3>Filtros</h3>
+    <div class="filters">
+      <div>
+        <label>Empresa:</label>
+        <select id="filtroEmpresa"><option value="TODAS">TODAS</option></select>
+      </div>
+      <div>
+        <label>Status:</label>
+        <select id="filtroStatus">
+          <option value="TODOS">TODOS</option>
+          <option value="PENDENTE">PENDENTE</option>
+          <option value="LANÇADO">LANÇADO</option>
+          <option value="PAGO">PAGO</option>
+        </select>
+      </div>
+      <div>
+        <label>Profissional:</label>
+        <input type="text" id="filtroProfissional">
+      </div>
+      <div>
+        <label>Pix:</label>
+        <input type="text" id="filtroPix">
+      </div>
+      <div>
+        <label>Data Início:</label>
+        <input type="date" id="filtroDataInicio">
+      </div>
+      <div>
+        <label>Data Fim:</label>
+        <input type="date" id="filtroDataFim">
+      </div>
+      <div>
+        <label>Valor Mínimo:</label>
+        <input type="number" id="filtroValorMin" step="0.01">
+      </div>
+      <div>
+        <label>Valor Máximo:</label>
+        <input type="number" id="filtroValorMax" step="0.01">
+      </div>
+      <div style="align-self: end">
+        <button onclick="aplicarFiltros()">Aplicar Filtros</button>
+      </div>
+    </div>
+
+    <button onclick="liquidarEmMassa()">Liquidar em Massa</button>
+
+    <table id="tabela">
+      <thead>
+        <tr>
+          <th>Empresa</th><th>Data</th><th>Profissional</th><th>Função</th><th>Pix</th><th>Titular</th><th>Tempo</th>
+          <th>Valor Acordado</th><th>Bonificação</th><th>Desconto</th><th>Valor Final</th>
+          <th>Data Pagamento</th><th>CPF</th><th>Status</th><th>Ações</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    // LocalStorage helpers
+    function salvarURLs() {
+      localStorage.setItem('url1', document.getElementById('url1').value);
+      localStorage.setItem('url2', document.getElementById('url2').value);
+      localStorage.setItem('url3', document.getElementById('url3').value);
+      localStorage.setItem('url4', document.getElementById('url4').value);
+      localStorage.setItem('url5', document.getElementById('url5').value);
+      alert("URLs salvas com sucesso! Recarregue a página ou aguarde leitura automática.");
+    }
+
+    function carregarURLsSalvas() {
+      ['url1','url2','url3','url4','url5'].forEach(id => {
+        const el = document.getElementById(id);
+        if (localStorage.getItem(id)) el.value = localStorage.getItem(id);
+      });
+    }
+
+    window.addEventListener('load', () => {
+      carregarURLsSalvas();
+      carregarTodosOsDados();
+    });
+  let todosDados = [];
+
+async function carregarTodosOsDados() {
+  const tabela = document.querySelector('#tabela tbody');
+  tabela.innerHTML = '';
+  todosDados = [];
+
+  const urls = [
+    { url: localStorage.getItem('url1'), empresa: 'MERCATTO DELÍCIA' },
+    { url: localStorage.getItem('url2'), empresa: 'M.KIDS' },
+    { url: localStorage.getItem('url3'), empresa: 'VILLA GOURMET' },
+    { url: localStorage.getItem('url4'), empresa: 'PADARIA DELÍCIA' },
+    { url: localStorage.getItem('url5'), empresa: 'DELÍCIA GOURMET' },
+  ].filter(item => item.url);
+  const filtro = document.getElementById('filtroEmpresa');
+  filtro.innerHTML = '<option value="TODAS">TODAS</option>' + empresas.map(e => `<option value="${e}">${e}</option>`).join('');
+}
+
+function aplicarFiltros() {
+  const tbody = document.querySelector('#tabela tbody');
+  tbody.innerHTML = '';
+
+  const emp = document.getElementById('filtroEmpresa').value;
+  const stat = document.getElementById('filtroStatus').value;
+  const prof = document.getElementById('filtroProfissional').value.trim().toLowerCase();
+  const pix = document.getElementById('filtroPix').value.trim().toLowerCase();
+  const dataIni = document.getElementById('filtroDataInicio').value;
+  const dataFim = document.getElementById('filtroDataFim').value;
+  const vMin = parseFloat(document.getElementById('filtroValorMin').value);
+  const vMax = parseFloat(document.getElementById('filtroValorMax').value);
+
+  const filtrados = todosDados.filter(item => {
+    const data = item.data ? item.data.split('T')[0] : '';
+    const valor = parseFloat(item.valorFinal || 0);
+    return (
+      (emp === 'TODAS' || item.empresa === emp) &&
+      (stat === 'TODOS' || item.status === stat) &&
+      (prof === '' || (item.profissional || '').toLowerCase().includes(prof)) &&
+      (pix === '' || (item.pix || '').toLowerCase().includes(pix)) &&
+      (!dataIni || data >= dataIni) &&
+      (!dataFim || data <= dataFim) &&
+      (isNaN(vMin) || valor >= vMin) &&
+      (isNaN(vMax) || valor <= vMax)
+    );
+  });
+
+  filtrados.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.className = (item.status || '').toLowerCase();
+    tr.innerHTML = `
+      <td>${item.empresa}</td>
+      <td>${item.data?.split('T')[0] || ''}</td>
+      <td>${item.profissional || ''}</td>
+      <td>${item.funcao || ''}</td>
+      <td>${item.pix || ''}</td>
+      <td>${item.titular || ''}</td>
+      <td>${item.tempo || ''}</td>
+      <td>R$ ${(item.valorAcordado || 0).toFixed(2)}</td>
+      <td>R$ ${(item.bonificacao || 0).toFixed(2)}</td>
+      <td>R$ ${(item.desconto || 0).toFixed(2)}</td>
+      <td>R$ ${(item.valorFinal || 0).toFixed(2)}</td>
+      <td>${item.dataPagamento ? new Date(item.dataPagamento).toLocaleDateString('pt-BR') : ''}</td>
+      <td>${item.cpf || ''}</td>
+      <td>${item.status}</td>
+      <td><div class="actions"><button onclick="alert('Função de edição/exclusão não implementada neste painel.')">Editar</button></div></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function liquidarEmMassa() {
+  const visiveis = document.querySelectorAll('#tabela tbody tr');
+  if (visiveis.length === 0) return alert('Nenhum registro para liquidar com os filtros aplicados.');
+
+  if (!confirm(`Deseja marcar ${visiveis.length} registros como PAGO?`)) return;
+
+  visiveis.forEach(tr => tr.classList.add('pago'));
+  alert('Registros marcados como PAGO (apenas visualmente). Envie para API se desejar persistência.');
+}
+</body>
+</html>
