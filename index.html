@@ -171,10 +171,13 @@ function aplicarFiltros() {
   const msg = document.getElementById('loading-message');
   msg.textContent = 'Carregando dados...';
   overlay.style.display = 'flex';
-  document.getElementById('loading-overlay').style.display = 'flex';
+
   const tbody = document.querySelector('#tabela tbody');
   tbody.innerHTML = '';
-  setTimeout(() => document.getElementById('loading-overlay').style.display = 'none', 300);
+
+  setTimeout(() => {
+    overlay.style.display = 'none';
+  }, 800);
 
   const emp = document.getElementById('filtroEmpresa').value;
   const stat = document.getElementById('filtroStatus').value;
@@ -244,10 +247,9 @@ function atualizarStatusIndividual(select, empresa, index) {
   const novoStatus = select.value;
   const valorAnterior = select.getAttribute('data-original');
 
-  // Se estiver mudando para PENDENTE, exigir senha
   if (novoStatus === 'PENDENTE' && valorAnterior !== 'PENDENTE') {
     const senha = prompt('Digite a senha para alterar para PENDENTE:');
-    if (senha !== '848663') {
+    if (senha !== '1234') {
       alert('Senha incorreta. Ação cancelada.');
       select.value = valorAnterior;
       return;
@@ -256,9 +258,9 @@ function atualizarStatusIndividual(select, empresa, index) {
   const url = urlMap[empresa];
   if (!url) return alert(`URL da empresa "${empresa}" não encontrada.`);
 
-  fetch(`${url}?acao=atualizarStatus`, {
+  fetch(url, {
     method: 'POST',
-    body: JSON.stringify({ index, status: novoStatus })
+    body: JSON.stringify({ acao: 'atualizarStatus', index, status: novoStatus })
   })
   .then(res => {
     if (!res.ok) throw new Error('Erro na requisição');
