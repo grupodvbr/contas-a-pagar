@@ -50,7 +50,12 @@
 </style>
 </head>
 <body>
-  <div id="loading-overlay">Carregando...</div>
+  <div id="loading-overlay">
+  <div style="text-align: center">
+    <img src="https://static.wixstatic.com/media/d830b0_8cec50a98bbf4775814dbfa5386585e8~mv2.png" style="width: 100px; margin-bottom: 10px;">
+    <div id="loading-message">Carregando dados...</div>
+  </div>
+</div>
 
   <header>
     <img src="https://static.wixstatic.com/media/d830b0_8cec50a98bbf4775814dbfa5386585e8~mv2.png" alt="Logo">
@@ -162,10 +167,14 @@ async function carregarTodosOsDados() {
 }
 
 function aplicarFiltros() {
+  const overlay = document.getElementById('loading-overlay');
+  const msg = document.getElementById('loading-message');
+  msg.textContent = 'Carregando dados...';
+  overlay.style.display = 'flex';
   document.getElementById('loading-overlay').style.display = 'flex';
   const tbody = document.querySelector('#tabela tbody');
   tbody.innerHTML = '';
-  document.getElementById('loading-overlay').style.display = 'none';
+  setTimeout(() => document.getElementById('loading-overlay').style.display = 'none', 300);
 
   const emp = document.getElementById('filtroEmpresa').value;
   const stat = document.getElementById('filtroStatus').value;
