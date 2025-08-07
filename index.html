@@ -247,7 +247,7 @@ function atualizarStatusIndividual(select, empresa, index) {
   // Se estiver mudando para PENDENTE, exigir senha
   if (novoStatus === 'PENDENTE' && valorAnterior !== 'PENDENTE') {
     const senha = prompt('Digite a senha para alterar para PENDENTE:');
-    if (senha !== '1234') {
+    if (senha !== '848663') {
       alert('Senha incorreta. Ação cancelada.');
       select.value = valorAnterior;
       return;
