@@ -175,9 +175,11 @@ function aplicarFiltros() {
   const tbody = document.querySelector('#tabela tbody');
   tbody.innerHTML = '';
 
+  .finally(() => {
   setTimeout(() => {
     overlay.style.display = 'none';
-  }, 800);
+  }, 500); // pequeno delay para melhor UX
+});
 
   const emp = document.getElementById('filtroEmpresa').value;
   const stat = document.getElementById('filtroStatus').value;
