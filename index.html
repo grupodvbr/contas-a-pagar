@@ -42,11 +42,11 @@
   <div class="container">
     <h3>URLs das Planilhas</h3>
     <div class="urls">
-      <div><label>MERCATTO DELÍCIA:</label><input type="text" id="url1" placeholder="URL da planilha"></div>
+      <div><label>MERCATTO DELÍCIA:</label><input type="text" id="url1" placeholder="https://script.google.com/macros/s/AKfycbyF43AWfkx0KmtSyYvR6hSz9mqe5iSV0E2rQFpzjKBOvidHPKpMaJSlbtnlG9U9D_2Z/exec"></div>
       <div><label>M.KIDS:</label><input type="text" id="url2" placeholder="URL da planilha"></div>
       <div><label>VILLA GOURMET:</label><input type="text" id="url3" placeholder="URL da planilha"></div>
       <div><label>PADARIA DELÍCIA:</label><input type="text" id="url4" placeholder="URL da planilha"></div>
-      <div><label>DELÍCIA GOURMET:</label><input type="text" id="url5" placeholder="URL da planilha"></div>
+      <div><label>DELÍCIA GOURMET:</label><input type="text" id="url5" placeholder="https://script.google.com/macros/s/AKfycbzPSkWtXyxuCc_AFUGnKz_QiDdQlEN_zsUeQ74J90aRXcBbb7KBm7X1rsG1JmF1iZLN/exec"></div>
       <div style="flex: 1 1 100%"><button onclick="salvarURLs()">Salvar URLs</button></div>
     </div>
       <div><label>Empresa 2:</label><input type="text" id="url2" placeholder="URL da planilha Google"></div>
@@ -143,11 +143,11 @@ async function carregarTodosOsDados() {
   todosDados = [];
 
   const urls = [
-    { url: localStorage.getItem('url1'), empresa: 'MERCATTO DELÍCIA' },
+    { url: localStorage.getItem('https://script.google.com/macros/s/AKfycbyF43AWfkx0KmtSyYvR6hSz9mqe5iSV0E2rQFpzjKBOvidHPKpMaJSlbtnlG9U9D_2Z/exec'), empresa: 'MERCATTO DELÍCIA' },
     { url: localStorage.getItem('url2'), empresa: 'M.KIDS' },
     { url: localStorage.getItem('url3'), empresa: 'VILLA GOURMET' },
     { url: localStorage.getItem('url4'), empresa: 'PADARIA DELÍCIA' },
-    { url: localStorage.getItem('url5'), empresa: 'DELÍCIA GOURMET' },
+    { url: localStorage.getItem('https://script.google.com/macros/s/AKfycbzPSkWtXyxuCc_AFUGnKz_QiDdQlEN_zsUeQ74J90aRXcBbb7KBm7X1rsG1JmF1iZLN/exec'), empresa: 'DELÍCIA GOURMET' },
   ].filter(item => item.url);
   const filtro = document.getElementById('filtroEmpresa');
   filtro.innerHTML = '<option value="TODAS">TODAS</option>' + empresas.map(e => `<option value="${e}">${e}</option>`).join('');
