@@ -224,6 +224,8 @@ function aplicarFiltros() {
       </select></td>
       <td><div class="actions"><button onclick="alert('Função de edição/exclusão não implementada neste painel.')">Editar</button></div></td>
     `;
+    const selectStatus = tr.querySelector('select');
+    if (selectStatus) selectStatus.setAttribute('data-original', item.status);
     tbody.appendChild(tr);
   });
 }
@@ -240,6 +242,17 @@ function liquidarEmMassa() {
 
 function atualizarStatusIndividual(select, empresa, index) {
   const novoStatus = select.value;
+  const valorAnterior = select.getAttribute('data-original');
+
+  // Se estiver mudando para PENDENTE, exigir senha
+  if (novoStatus === 'PENDENTE' && valorAnterior !== 'PENDENTE') {
+    const senha = prompt('Digite a senha para alterar para PENDENTE:');
+    if (senha !== '1234') {
+      alert('Senha incorreta. Ação cancelada.');
+      select.value = valorAnterior;
+      return;
+    }
+  }
   const url = urlMap[empresa];
   if (!url) return alert(`URL da empresa "${empresa}" não encontrada.`);
 
