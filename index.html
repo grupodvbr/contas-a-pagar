@@ -23,8 +23,6 @@
     .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
     .filters > div { flex: 1 1 180px; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-
-    /* Overlay de carregamento */
     #loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,.9); display: none; justify-content: center; align-items: center; z-index: 9999; }
     #loading-overlay .box { display:flex; flex-direction:column; align-items:center; gap:10px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:18px 22px; box-shadow:0 10px 30px rgba(0,0,0,.12) }
     #loading-overlay .spinner { width:32px; height:32px; border:3px solid #e5e7eb; border-top-color:#2c3e50; border-radius:50%; animation:spin 1s linear infinite }
@@ -32,10 +30,9 @@
   </style>
 </head>
 <body>
-  <!-- Overlay -->
-  <div id="loading-overlay" aria-hidden="true" aria-busy="false">
+  <div id="loading-overlay">
     <div class="box">
-      <div class="spinner" aria-hidden="true"></div>
+      <div class="spinner"></div>
       <div id="loading-message">Carregando dados...</div>
     </div>
   </div>
@@ -112,43 +109,40 @@
   </div>
 
 <script>
-// ===== Endpoints por empresa (preenchidos e placeholders) =====
 const urls = [
   { url: 'https://script.google.com/macros/s/AKfycbyF43AWfkx0KmtSyYvR6hSz9mqe5iSV0E2rQFpzjKBOvidHPKpMaJSlbtnlG9U9D_2Z/exec', empresa: 'MERCATTO DELÍCIA' },
-  { url: '', empresa: 'M.KIDS' },                 // TODO: colocar URL do Apps Script
-  { url: '', empresa: 'VILLA GOURMET' },          // TODO: colocar URL do Apps Script
-  { url: '', empresa: 'PADARIA DELÍCIA' },        // TODO: colocar URL do Apps Script
+  { url: '', empresa: 'M.KIDS' },
+  { url: '', empresa: 'VILLA GOURMET' },
+  { url: '', empresa: 'PADARIA DELÍCIA' },
   { url: 'https://script.google.com/macros/s/AKfycbxWrof6NgQLV8P6UnSKJivNvuEE4NwYYy7DEg84r05Yk4fG5w1IRqdW7awoxRpVC5YrBA/exec', empresa: 'DELÍCIA GOURMET' }
 ];
 
 const urlMap = {
   'MERCATTO DELÍCIA': 'https://script.google.com/macros/s/AKfycbyF43AWfkx0KmtSyYvR6hSz9mqe5iSV0E2rQFpzjKBOvidHPKpMaJSlbtnlG9U9D_2Z/exec',
-  'M.KIDS': '',              // TODO
-  'VILLA GOURMET': '',       // TODO
-  'PADARIA DELÍCIA': '',     // TODO
+  'M.KIDS': '',
+  'VILLA GOURMET': '',
+  'PADARIA DELÍCIA': '',
   'DELÍCIA GOURMET': 'https://script.google.com/macros/s/AKfycbxWrof6NgQLV8P6UnSKJivNvuEE4NwYYy7DEg84r05Yk4fG5w1IRqdW7awoxRpVC5YrBA/exec'
 };
 
-// ===== Estado =====
 let todosDados = [];
 const overlay = document.getElementById('loading-overlay');
 const overlayMsg = document.getElementById('loading-message');
 const tbody = document.querySelector('#tabela tbody');
 const btnAplicar = document.getElementById('btnAplicar');
 
-// ===== Utils =====
 const toMoney = v => (isNaN(Number(v)) ? 0 : Number(v)).toFixed(2);
 const normClass = s => String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-function showOverlay(text='Carregando dados...'){ overlayMsg.textContent=text; overlay.style.display='flex'; document.body.style.pointerEvents='none'; btnAplicar.disabled=true; }
-function hideOverlay(){ overlay.style.display='none'; document.body.style.pointerEvents='auto'; btnAplicar.disabled=false; }
 
-// ===== Carga =====
+function showOverlay(text='Carregando dados...'){ overlayMsg.textContent=text; overlay.style.display='flex'; btnAplicar.disabled=true; }
+function hideOverlay(){ overlay.style.display='none'; btnAplicar.disabled=false; }
+
 async function carregarTodosOsDados(){
   showOverlay('Carregando dados de todas as empresas...');
   tbody.innerHTML = '';
   todosDados = [];
   for (const config of urls) {
-    if (!config.url) continue; // pula empresas sem URL (placeholder)
+    if (!config.url) continue;
     try {
       const res = await fetch(`${config.url}?acao=ler`, { cache:'no-store' });
       const dados = await res.json();
@@ -162,11 +156,9 @@ async function carregarTodosOsDados(){
   aplicarFiltros();
 }
 
-// ===== Filtros/render =====
 function aplicarFiltros(){
   showOverlay('Aplicando filtros...');
   tbody.innerHTML = '';
-
   const emp = document.getElementById('filtroEmpresa').value;
   const stat = document.getElementById('filtroStatus').value;
   const prof = document.getElementById('filtroProfissional').value.trim().toLowerCase();
@@ -176,7 +168,7 @@ function aplicarFiltros(){
   const vMin = parseFloat(document.getElementById('filtroValorMin').value);
   const vMax = parseFloat(document.getElementById('filtroValorMax').value);
 
-  const filtrados = (todosDados||[]).filter(item => {
+  const filtrados = todosDados.filter(item => {
     const data = item.data ? String(item.data).split('T')[0] : '';
     const valor = Number(item.valorFinal) || 0;
     return (
@@ -193,7 +185,7 @@ function aplicarFiltros(){
 
   filtrados.forEach(item => {
     const tr = document.createElement('tr');
-    tr.className = normClass(item.status); // pendente, lancado, pago
+    tr.className = normClass(item.status);
     const comentario = item.comentario || item.observacao || item.obs || '';
     tr.innerHTML = `
       <td>${item.empresa}</td>
@@ -217,11 +209,7 @@ function aplicarFiltros(){
         </select>
       </td>
       <td class="comentario">${comentario}</td>
-      <td>
-        <div class="actions">
-          <button type="button" onclick="comentar('${item.empresa}', ${item.index}, this)">Comentar</button>
-        </div>
-      </td>
+      <td><button type="button" onclick="comentar('${item.empresa}', ${item.index}, this)">Comentar</button></td>
     `;
     tbody.appendChild(tr);
   });
@@ -229,53 +217,54 @@ function aplicarFiltros(){
   setTimeout(hideOverlay, 150);
 }
 
-function liquidarEmMassa(){
-  const visiveis = document.querySelectorAll('#tabela tbody tr');
-  if (visiveis.length === 0) return alert('Nenhum registro para liquidar com os filtros aplicados.');
-  if (!confirm(`Deseja marcar ${visiveis.length} registros como PAGO?`)) return;
-  visiveis.forEach(tr => tr.classList.add('pago'));
-  alert('Registros marcados como PAGO (apenas visual). Para persistir, envie para a API.');
-}
-
 function atualizarStatusIndividual(select, empresa, index){
   const novoStatus = select.value;
   const valorAnterior = select.getAttribute('data-original');
   if (novoStatus === 'PENDENTE' && valorAnterior !== 'PENDENTE') {
     const senha = prompt('Digite a senha para alterar para PENDENTE:');
-    if (senha !== '848663') { alert('Senha incorreta. Ação cancelada.'); select.value = valorAnterior; return; }
+    if (senha !== '848663') { alert('Senha incorreta.'); select.value = valorAnterior; return; }
   }
   const url = urlMap[empresa];
-  if (!url) { alert(`URL da empresa "${empresa}" não encontrada. Configure em urlMap.`); select.value = valorAnterior; return; }
+  if (!url) { alert(`URL da empresa "${empresa}" não encontrada.`); select.value = valorAnterior; return; }
 
   showOverlay('Atualizando status...');
-  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ acao: 'atualizarStatus', index, status: novoStatus }) })
-    .then(res => { if (!res.ok) throw new Error('Erro na requisição'); return res.text(); })
+  const formData = new FormData();
+  formData.append('acao', 'atualizarStatus');
+  formData.append('index', index);
+  formData.append('status', novoStatus);
+
+  fetch(url, { method: 'POST', body: formData })
+    .then(res => res.text())
     .then(() => { select.setAttribute('data-original', novoStatus); alert(`Status atualizado para ${novoStatus}`); })
-    .catch(err => { console.error(err); alert('Erro ao atualizar status'); select.value = valorAnterior; })
+    .catch(() => { alert('Erro ao atualizar status'); select.value = valorAnterior; })
     .finally(() => hideOverlay());
 }
 
 function comentar(empresa, index, btnEl){
   const url = urlMap[empresa];
-  if (!url) { alert(`URL da empresa "${empresa}" não encontrada. Configure em urlMap.`); return; }
+  if (!url) { alert(`URL da empresa "${empresa}" não encontrada.`); return; }
   const tr = btnEl.closest('tr');
   const tdComentario = tr.querySelector('.comentario');
   const atual = tdComentario ? tdComentario.textContent.trim() : '';
   const texto = prompt('Digite o comentário a registrar (coluna ao lado de Status):', atual);
-  if (texto === null) return; // cancelado
+  if (texto === null) return;
+
   showOverlay('Registrando comentário...');
-  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ acao: 'comentar', index, comentario: texto }) })
-    .then(res => { if (!res.ok) throw new Error('Erro na requisição'); return res.text(); })
+  const formData = new FormData();
+  formData.append('acao', 'comentar');
+  formData.append('index', index);
+  formData.append('comentario', texto);
+
+  fetch(url, { method: 'POST', body: formData })
+    .then(res => res.text())
     .then(() => { if (tdComentario) tdComentario.textContent = texto; alert('Comentário registrado.'); })
-    .catch(err => { console.error(err); alert('Erro ao registrar comentário'); })
+    .catch(() => { alert('Erro ao registrar comentário'); })
     .finally(() => hideOverlay());
 }
 
-// Eventos
-btnAplicar.addEventListener('click', aplicarFiltros);
+document.getElementById('btnAplicar').addEventListener('click', aplicarFiltros);
 window.addEventListener('load', carregarTodosOsDados);
-
-document.getElementById('btnLiquidar').addEventListener('click', liquidarEmMassa);
+document.getElementById('btnLiquidar').addEventListener('click', () => alert('Função de liquidação em massa ainda não implementada.'));
 </script>
 </body>
 </html>
