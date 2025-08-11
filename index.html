@@ -7,55 +7,38 @@
   <style>
     * { box-sizing: border-box; }
     body { font-family: Arial, sans-serif; margin: 0; background: #f4f4f4; }
-    header {
-      background: white; padding: 10px 20px; display: flex; align-items: center; border-bottom: 1px solid #ccc;
-    }
+    header { background: white; padding: 10px 20px; display: flex; align-items: center; border-bottom: 1px solid #ccc; }
     header img { height: 50px; margin-right: 20px; }
     header h1 { font-size: 1.5em; margin: 0; }
     .container { padding: 20px; }
-    input, select, button {
-      padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px;
-    }
-    button { background: #2c3e50; color: white; cursor: pointer; }
+    input, select, button { padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; }
+    button { background: #2c3e50; color: white; cursor: pointer; border: none; }
     button:hover { background: #34495e; }
-    table {
-      width: 100%; border-collapse: collapse; background: white; margin-top: 20px;
-    }
-    th, td {
-      padding: 8px; border: 1px solid #ddd; font-size: 13px; text-align: left;
-    }
+    button[disabled]{ opacity:.6; cursor:not-allowed; }
+    table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; }
+    th, td { padding: 8px; border: 1px solid #ddd; font-size: 13px; text-align: left; }
     .pago { background: #c8f7c5; }
     .pendente { background: #f7c5c5; }
     .lancado { background: #fdf4c5; }
     .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
     .filters > div { flex: 1 1 180px; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* Overlay de carregamento */
+    #loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,.9); display: none; justify-content: center; align-items: center; z-index: 9999; }
+    #loading-overlay .box { display:flex; flex-direction:column; align-items:center; gap:10px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:18px 22px; box-shadow:0 10px 30px rgba(0,0,0,.12) }
+    #loading-overlay .spinner { width:32px; height:32px; border:3px solid #e5e7eb; border-top-color:#2c3e50; border-radius:50%; animation:spin 1s linear infinite }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
-<style>
-  #loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.5em;
-    color: #333;
-    z-index: 9999;
-    display: none;
-  }
-</style>
 </head>
 <body>
-  <div id="loading-overlay">
-  <div style="text-align: center">
-    <img src="https://static.wixstatic.com/media/d830b0_8cec50a98bbf4775814dbfa5386585e8~mv2.png" style="width: 100px; margin-bottom: 10px;">
-    <div id="loading-message">Carregando dados...</div>
+  <!-- Overlay -->
+  <div id="loading-overlay" aria-hidden="true" aria-busy="false">
+    <div class="box">
+      <div class="spinner" aria-hidden="true"></div>
+      <div id="loading-message">Carregando dados...</div>
+    </div>
   </div>
-</div>
 
   <header>
     <img src="https://static.wixstatic.com/media/d830b0_8cec50a98bbf4775814dbfa5386585e8~mv2.png" alt="Logo">
@@ -79,11 +62,11 @@
       <div>
         <label>Status:</label>
         <select id="filtroStatus">
-  <option value="TODOS">TODOS</option>
-  <option value="PENDENTE">PENDENTE</option>
-  <option value="LANÇADO" selected>LANÇADO</option>
-  <option value="PAGO">PAGO</option>
-</select>
+          <option value="TODOS">TODOS</option>
+          <option value="PENDENTE">PENDENTE</option>
+          <option value="LANÇADO" selected>LANÇADO</option>
+          <option value="PAGO">PAGO</option>
+        </select>
       </div>
       <div>
         <label>Profissional:</label>
@@ -109,12 +92,12 @@
         <label>Valor Máximo:</label>
         <input type="number" id="filtroValorMax" step="0.01">
       </div>
-      <div style="align-self: end">
-        <button onclick="aplicarFiltros()">Aplicar Filtros</button>
+      <div style="align-self:end">
+        <button id="btnAplicar">Aplicar Filtros</button>
       </div>
     </div>
 
-    <button onclick="liquidarEmMassa()">Liquidar em Massa</button>
+    <button id="btnLiquidar" type="button">Liquidar em Massa</button>
 
     <table id="tabela">
       <thead>
@@ -129,57 +112,60 @@
   </div>
 
 <script>
+// ===== Endpoints por empresa (preenchidos e placeholders) =====
 const urls = [
   { url: 'https://script.google.com/macros/s/AKfycbyF43AWfkx0KmtSyYvR6hSz9mqe5iSV0E2rQFpzjKBOvidHPKpMaJSlbtnlG9U9D_2Z/exec', empresa: 'MERCATTO DELÍCIA' },
-  { url: '', empresa: 'M.KIDS' },
-  { url: '', empresa: 'VILLA GOURMET' },
-  { url: '', empresa: 'PADARIA DELÍCIA' },
+  { url: '', empresa: 'M.KIDS' },                 // TODO: colocar URL do Apps Script
+  { url: '', empresa: 'VILLA GOURMET' },          // TODO: colocar URL do Apps Script
+  { url: '', empresa: 'PADARIA DELÍCIA' },        // TODO: colocar URL do Apps Script
   { url: 'https://script.google.com/macros/s/AKfycbzPSkWtXyxuCc_AFUGnKz_QiDdQlEN_zsUeQ74J90aRXcBbb7KBm7X1rsG1JmF1iZLN/exec', empresa: 'DELÍCIA GOURMET' }
 ];
 
 const urlMap = {
   'MERCATTO DELÍCIA': 'https://script.google.com/macros/s/AKfycbyF43AWfkx0KmtSyYvR6hSz9mqe5iSV0E2rQFpzjKBOvidHPKpMaJSlbtnlG9U9D_2Z/exec',
-  'M.KIDS': '',
-  'VILLA GOURMET': '',
-  'PADARIA DELÍCIA': '',
+  'M.KIDS': '',              // TODO
+  'VILLA GOURMET': '',       // TODO
+  'PADARIA DELÍCIA': '',     // TODO
   'DELÍCIA GOURMET': 'https://script.google.com/macros/s/AKfycbzPSkWtXyxuCc_AFUGnKz_QiDdQlEN_zsUeQ74J90aRXcBbb7KBm7X1rsG1JmF1iZLN/exec'
 };
 
+// ===== Estado =====
 let todosDados = [];
+const overlay = document.getElementById('loading-overlay');
+const overlayMsg = document.getElementById('loading-message');
+const tbody = document.querySelector('#tabela tbody');
+const btnAplicar = document.getElementById('btnAplicar');
 
-async function carregarTodosOsDados() {
-  const tabela = document.querySelector('#tabela tbody');
-  tabela.innerHTML = '';
+// ===== Utils =====
+const toMoney = v => (isNaN(Number(v)) ? 0 : Number(v)).toFixed(2);
+const normClass = s => String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+function showOverlay(text='Carregando dados...'){ overlayMsg.textContent=text; overlay.style.display='flex'; document.body.style.pointerEvents='none'; btnAplicar.disabled=true; }
+function hideOverlay(){ overlay.style.display='none'; document.body.style.pointerEvents='auto'; btnAplicar.disabled=false; }
+
+// ===== Carga =====
+async function carregarTodosOsDados(){
+  showOverlay('Carregando dados de todas as empresas...');
+  tbody.innerHTML = '';
   todosDados = [];
-
   for (const config of urls) {
-    if (!config.url) continue;
+    if (!config.url) continue; // pula empresas sem URL (placeholder)
     try {
-      const res = await fetch(`${config.url}?acao=ler`);
+      const res = await fetch(`${config.url}?acao=ler`, { cache:'no-store' });
       const dados = await res.json();
-      dados.forEach(item => item.empresa = config.empresa);
+      (dados||[]).forEach(item => item.empresa = config.empresa);
       todosDados.push(...dados);
     } catch (e) {
-      console.warn('Erro ao carregar dados de', config.empresa);
+      console.warn('Erro ao carregar dados de', config.empresa, e);
     }
   }
+  hideOverlay();
   aplicarFiltros();
 }
 
-function aplicarFiltros() {
-  const overlay = document.getElementById('loading-overlay');
-  const msg = document.getElementById('loading-message');
-  msg.textContent = 'Carregando dados...';
-  overlay.style.display = 'flex';
-
-  const tbody = document.querySelector('#tabela tbody');
+// ===== Filtros/render =====
+function aplicarFiltros(){
+  showOverlay('Aplicando filtros...');
   tbody.innerHTML = '';
-
-  .finally(() => {
-  setTimeout(() => {
-    overlay.style.display = 'none';
-  }, 500); // pequeno delay para melhor UX
-});
 
   const emp = document.getElementById('filtroEmpresa').value;
   const stat = document.getElementById('filtroStatus').value;
@@ -190,9 +176,9 @@ function aplicarFiltros() {
   const vMin = parseFloat(document.getElementById('filtroValorMin').value);
   const vMax = parseFloat(document.getElementById('filtroValorMax').value);
 
-  const filtrados = todosDados.filter(item => {
-    const data = item.data ? item.data.split('T')[0] : '';
-    const valor = parseFloat(item.valorFinal || 0);
+  const filtrados = (todosDados||[]).filter(item => {
+    const data = item.data ? String(item.data).split('T')[0] : '';
+    const valor = Number(item.valorFinal) || 0;
     return (
       (emp === 'TODAS' || item.empresa === emp) &&
       (stat === 'TODOS' || item.status === stat) &&
@@ -207,74 +193,73 @@ function aplicarFiltros() {
 
   filtrados.forEach(item => {
     const tr = document.createElement('tr');
-    tr.className = (item.status || '').toLowerCase();
+    tr.className = normClass(item.status); // pendente, lancado, pago
     tr.innerHTML = `
       <td>${item.empresa}</td>
-      <td>${item.data?.split('T')[0] || ''}</td>
+      <td>${item.data ? String(item.data).split('T')[0] : ''}</td>
       <td>${item.profissional || ''}</td>
       <td>${item.funcao || ''}</td>
       <td>${item.pix || ''}</td>
       <td>${item.titular || ''}</td>
       <td>${item.tempo || ''}</td>
-      <td>R$ ${(item.valorAcordado || 0).toFixed(2)}</td>
-      <td>R$ ${(item.bonificacao || 0).toFixed(2)}</td>
-      <td>R$ ${(item.desconto || 0).toFixed(2)}</td>
-      <td>R$ ${(item.valorFinal || 0).toFixed(2)}</td>
+      <td>R$ ${toMoney(item.valorAcordado)}</td>
+      <td>R$ ${toMoney(item.bonificacao)}</td>
+      <td>R$ ${toMoney(item.desconto)}</td>
+      <td>R$ ${toMoney(item.valorFinal)}</td>
       <td>${item.dataPagamento ? new Date(item.dataPagamento).toLocaleDateString('pt-BR') : ''}</td>
       <td>${item.cpf || ''}</td>
-      <td><select onchange="atualizarStatusIndividual(this, '${item.empresa}', ${item.index})">
-        <option value="PENDENTE" ${item.status === 'PENDENTE' ? 'selected' : ''}>PENDENTE</option>
-        <option value="LANÇADO" ${item.status === 'LANÇADO' ? 'selected' : ''}>LANÇADO</option>
-        <option value="PAGO" ${item.status === 'PAGO' ? 'selected' : ''}>PAGO</option>
-      </select></td>
-      <td><div class="actions"><button onclick="alert('Função de edição/exclusão não implementada neste painel.')">Editar</button></div></td>
+      <td>
+        <select onchange="atualizarStatusIndividual(this, '${item.empresa}', ${item.index})" data-original="${item.status}">
+          <option value="PENDENTE" ${item.status === 'PENDENTE' ? 'selected' : ''}>PENDENTE</option>
+          <option value="LANÇADO" ${item.status === 'LANÇADO' ? 'selected' : ''}>LANÇADO</option>
+          <option value="PAGO" ${item.status === 'PAGO' ? 'selected' : ''}>PAGO</option>
+        </select>
+      </td>
+      <td><div class="actions"><button type="button" onclick="alert('Função de edição/exclusão não implementada neste painel.')">Editar</button></div></td>
     `;
-    const selectStatus = tr.querySelector('select');
-    if (selectStatus) selectStatus.setAttribute('data-original', item.status);
     tbody.appendChild(tr);
   });
+
+  setTimeout(hideOverlay, 150);
 }
 
-function liquidarEmMassa() {
+function liquidarEmMassa(){
   const visiveis = document.querySelectorAll('#tabela tbody tr');
   if (visiveis.length === 0) return alert('Nenhum registro para liquidar com os filtros aplicados.');
-
   if (!confirm(`Deseja marcar ${visiveis.length} registros como PAGO?`)) return;
-
   visiveis.forEach(tr => tr.classList.add('pago'));
-  alert('Registros marcados como PAGO (apenas visualmente). Envie para API se desejar persistência.');
+  alert('Registros marcados como PAGO (apenas visual). Para persistir, envie para a API.');
 }
 
-function atualizarStatusIndividual(select, empresa, index) {
+function atualizarStatusIndividual(select, empresa, index){
   const novoStatus = select.value;
   const valorAnterior = select.getAttribute('data-original');
 
   if (novoStatus === 'PENDENTE' && valorAnterior !== 'PENDENTE') {
     const senha = prompt('Digite a senha para alterar para PENDENTE:');
-    if (senha !== '848663') {
-      alert('Senha incorreta. Ação cancelada.');
-      select.value = valorAnterior;
-      return;
-    }
+    if (senha !== '848663') { alert('Senha incorreta. Ação cancelada.'); select.value = valorAnterior; return; }
   }
-  const url = urlMap[empresa];
-  if (!url) return alert(`URL da empresa "${empresa}" não encontrada.`);
 
+  const url = urlMap[empresa];
+  if (!url) { alert(`URL da empresa "${empresa}" não encontrada. Configure em urlMap.`); select.value = valorAnterior; return; }
+
+  showOverlay('Atualizando status...');
   fetch(url, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ acao: 'atualizarStatus', index, status: novoStatus })
   })
-  .then(res => {
-    if (!res.ok) throw new Error('Erro na requisição');
-    alert(`Status atualizado para ${novoStatus}`);
-  })
-  .catch(err => {
-    alert('Erro ao atualizar status');
-    console.error(err);
-  });
+  .then(res => { if (!res.ok) throw new Error('Erro na requisição'); return res.text(); })
+  .then(() => { alert(`Status atualizado para ${novoStatus}`); select.setAttribute('data-original', novoStatus); })
+  .catch(err => { console.error(err); alert('Erro ao atualizar status'); select.value = valorAnterior; })
+  .finally(() => hideOverlay());
 }
 
+// Eventos
+btnAplicar.addEventListener('click', aplicarFiltros);
 window.addEventListener('load', carregarTodosOsDados);
+
+document.getElementById('btnLiquidar').addEventListener('click', liquidarEmMassa);
 </script>
 </body>
 </html>
