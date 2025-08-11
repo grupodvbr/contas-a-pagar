@@ -104,7 +104,7 @@
         <tr>
           <th>Empresa</th><th>Data</th><th>Profissional</th><th>Função</th><th>Pix</th><th>Titular</th><th>Tempo</th>
           <th>Valor Acordado</th><th>Bonificação</th><th>Desconto</th><th>Valor Final</th>
-          <th>Data Pagamento</th><th>CPF</th><th>Status</th><th>Ações</th>
+          <th>Data Pagamento</th><th>CPF</th><th>Status</th><th>Comentário</th><th>Ações</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -194,6 +194,7 @@ function aplicarFiltros(){
   filtrados.forEach(item => {
     const tr = document.createElement('tr');
     tr.className = normClass(item.status); // pendente, lancado, pago
+    const comentario = item.comentario || item.observacao || item.obs || '';
     tr.innerHTML = `
       <td>${item.empresa}</td>
       <td>${item.data ? String(item.data).split('T')[0] : ''}</td>
@@ -215,7 +216,12 @@ function aplicarFiltros(){
           <option value="PAGO" ${item.status === 'PAGO' ? 'selected' : ''}>PAGO</option>
         </select>
       </td>
-      <td><div class="actions"><button type="button" onclick="alert('Função de edição/exclusão não implementada neste painel.')">Editar</button></div></td>
+      <td class="comentario">${comentario}</td>
+      <td>
+        <div class="actions">
+          <button type="button" onclick="comentar('${item.empresa}', ${item.index}, this)">Editar</button>
+        </div>
+      </td>
     `;
     tbody.appendChild(tr);
   });
@@ -234,25 +240,35 @@ function liquidarEmMassa(){
 function atualizarStatusIndividual(select, empresa, index){
   const novoStatus = select.value;
   const valorAnterior = select.getAttribute('data-original');
-
   if (novoStatus === 'PENDENTE' && valorAnterior !== 'PENDENTE') {
     const senha = prompt('Digite a senha para alterar para PENDENTE:');
     if (senha !== '848663') { alert('Senha incorreta. Ação cancelada.'); select.value = valorAnterior; return; }
   }
-
   const url = urlMap[empresa];
   if (!url) { alert(`URL da empresa "${empresa}" não encontrada. Configure em urlMap.`); select.value = valorAnterior; return; }
 
   showOverlay('Atualizando status...');
-  fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ acao: 'atualizarStatus', index, status: novoStatus })
-  })
-  .then(res => { if (!res.ok) throw new Error('Erro na requisição'); return res.text(); })
-  .then(() => { alert(`Status atualizado para ${novoStatus}`); select.setAttribute('data-original', novoStatus); })
-  .catch(err => { console.error(err); alert('Erro ao atualizar status'); select.value = valorAnterior; })
-  .finally(() => hideOverlay());
+  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ acao: 'atualizarStatus', index, status: novoStatus }) })
+    .then(res => { if (!res.ok) throw new Error('Erro na requisição'); return res.text(); })
+    .then(() => { select.setAttribute('data-original', novoStatus); alert(`Status atualizado para ${novoStatus}`); })
+    .catch(err => { console.error(err); alert('Erro ao atualizar status'); select.value = valorAnterior; })
+    .finally(() => hideOverlay());
+}
+
+function comentar(empresa, index, btnEl){
+  const url = urlMap[empresa];
+  if (!url) { alert(`URL da empresa "${empresa}" não encontrada. Configure em urlMap.`); return; }
+  const tr = btnEl.closest('tr');
+  const tdComentario = tr.querySelector('.comentario');
+  const atual = tdComentario ? tdComentario.textContent.trim() : '';
+  const texto = prompt('Digite o comentário a registrar (coluna ao lado de Status):', atual);
+  if (texto === null) return; // cancelado
+  showOverlay('Registrando comentário...');
+  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ acao: 'comentar', index, comentario: texto }) })
+    .then(res => { if (!res.ok) throw new Error('Erro na requisição'); return res.text(); })
+    .then(() => { if (tdComentario) tdComentario.textContent = texto; alert('Comentário registrado.'); })
+    .catch(err => { console.error(err); alert('Erro ao registrar comentário'); })
+    .finally(() => hideOverlay());
 }
 
 // Eventos
